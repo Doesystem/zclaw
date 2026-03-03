@@ -8,6 +8,19 @@ The format is based on Keep a Changelog and this project follows Semantic Versio
 
 - No unreleased changes yet.
 
+## [2.10.1] - 2026-03-03
+
+### Fixed
+- Hardened `llm_request` argument validation to fail fast on invalid/null request and response buffer inputs.
+- Rate-limit persistence now records/logs NVS write failures instead of silently ignoring failed writes.
+- Boot-count persistence parsing now uses strict numeric parsing with safe fallback on invalid/negative/overflow values.
+
+### Tests
+- Added host runtime coverage for `llm_request` invalid-argument handling.
+- Added host runtime coverage for rate-limit persistence failure accounting and retry persistence behavior.
+- Added host runtime coverage for boot-guard fallback behavior with invalid persisted boot-count values.
+- Updated host ratelimit runtime test compile flags for Linux CI portability (`localtime_r` declaration via POSIX feature macro).
+
 ## [2.10.0] - 2026-03-03
 
 ### Added
