@@ -61,6 +61,7 @@ run_host_tests() {
         test_telegram_poll_policy.c \
         test_agent.c \
         test_tools_gpio_policy.c \
+        test_builtin_tools_registry.c \
         test_tools_system_diag.c \
         test_llm_auth.c \
         test_wifi_credentials.c \

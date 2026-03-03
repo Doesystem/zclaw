@@ -242,7 +242,7 @@ For Telegram control-plane checks without an LLM round trip, use `/diag [scope] 
 - `scope: rates` — request counters (`/hr`, `/day`)
 - `scope: time` — sync status and timezone
 - `scope: all` — multi-line summary across all categories
-- `verbose: true` — includes expanded details (for example raw uptime microseconds)
+- `verbose: true` — includes expanded details (for example uptime in `seconds.microseconds`)
 
 Example tool call inputs:
 
@@ -299,6 +299,8 @@ Agent: [GPIO 5 on → 30s → off] Done, plants watered.
 
 User tools are stored persistently and survive reboots. Up to 8 custom tools can be defined.
 
+For code-defined firmware tools (new C handlers + reflash), use the "Build Your Own Tool" chapter approach for built-in tools.
+
 **How it works:**
 
 1. **Creation** — When you ask to create a tool, the model calls `create_tool` with:
@@ -315,6 +317,50 @@ User tools are stored persistently and survive reboots. Up to 8 custom tools can
    - The C code runs on the ESP32, controlling actual hardware
 
 User tools are compositions of built-in primitives (`gpio_write`, `delay`, `memory_set`, `cron_set`, etc.) — no new code is generated, just natural language that the configured model decomposes into tool calls.
+
+### Method B: Firmware Tool Walkthrough (C Code + Reflash)
+
+Use this path when you need new capability beyond composition of existing tools.
+
+Example: add a built-in tool named `relay_status`.
+
+1. Implement a handler in `main/tools_*.c`:
+
+```c
+bool tools_relay_status_handler(const cJSON *input, char *result, size_t result_len)
+{
+    (void)input;
+    snprintf(result, result_len, "Relay status: healthy");
+    return true;
+}
+```
+
+2. Declare it in `main/tools_handlers.h`:
+
+```c
+bool tools_relay_status_handler(const cJSON *input, char *result, size_t result_len);
+```
+
+3. Register it in `main/builtin_tools.def`:
+
+```c
+TOOL_ENTRY("relay_status",
+           "Get relay health from host web relay.",
+           "{\"type\":\"object\",\"properties\":{}}",
+           tools_relay_status_handler)
+```
+
+4. Add host tests in `test/host/` for validation and output shape.
+5. Run the normal firmware flow:
+
+```bash
+./scripts/test.sh host
+./scripts/build.sh
+./scripts/flash.sh --kill-monitor /dev/cu.usbmodem1101
+./scripts/monitor.sh /dev/cu.usbmodem1101
+```
+
+Treat `name`, `description`, and JSON schema as a model-facing API contract and keep tests aligned when behavior changes.
 
 ## Manual Setup
 
